@@ -1,15 +1,17 @@
 from flask import Flask, request, jsonify
-from flsak_limiter import Limiter
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 import requests
 from datetime import datetime
+import spacy
 
 app = Flask(__name__)
 limiter = Limiter(
-  get_remote_address,
-  app=app,
-  default_limits["200 per day", "50 per hour"],
-  storage_uri="memory://"
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
 )
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})

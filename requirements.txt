@@ -1,0 +1,3 @@
+Flask-Caching
+spacy
+Flask-Limiter

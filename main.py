@@ -26,7 +26,7 @@ VALID_TEAMS = [
     "STL", "TBL", "TOR", "VAN", "VGK", "WPG", "WSH"
 ]
 
-@app.route('/team-stats', method=['POST'])
+@app.route('/team-stats', methods=['POST'])
 @limiter.limit("10 per minute")
 def get_team_stats():
   data = request.get_json()

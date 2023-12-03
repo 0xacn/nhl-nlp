@@ -26,18 +26,52 @@ VALID_TEAMS = [
     "STL", "TBL", "TOR", "VAN", "VGK", "WPG", "WSH"
 ]
 
+TEAM_NAME_MAPPING = {
+    "ANA": "Anaheim Ducks",
+    "ARI": "Arizona Coyotes",
+    "BOS": "Boston Bruins",
+    "BUF": "Buffalo Sabres",
+    "CAR": "Carolina Hurricanes",
+    "CBJ": "Columbus Blue Jackets",
+    "CGY": "Calgary Flames",
+    "CHI": "Chicago Blackhawks",
+    "COL": "Colorado Avalanche",
+    "DAL": "Dallas Stars",
+    "DET": "Detroit Red Wings",
+    "EDM": "Edmonton Oilers",
+    "FLA": "Florida Panthers",
+    "LAK": "Los Angeles Kings",
+    "MIN": "Minnesota Wild",
+    "MTL": "Montreal Canadiens",
+    "NJD": "New Jersey Devils",
+    "NSH": "Nashville Predators",
+    "NYI": "New York Islanders",
+    "NYR": "New York Rangers",
+    "OTT": "Ottawa Senators",
+    "PHI": "Philadelphia Flyers",
+    "PIT": "Pittsburgh Penguins",
+    "SJS": "San Jose Sharks",
+    "STL": "St. Louis Blues",
+    "TBL": "Tampa Bay Lightning",
+    "TOR": "Toronto Maple Leafs",
+    "VAN": "Vancouver Canucks",
+    "VGK": "Vegas Golden Knights",
+    "WPG": "Winnipeg Jets",
+    "WSH": "Washington Capitals",
+}
+ 
 @app.route('/team-stats', methods=['POST'])
 @limiter.limit("10 per minute")
 def get_team_stats():
   data = request.get_json()
-  user_query = dat['query']
+  user_query = data['query']
 
-  team_name = extract_name_name(user_query)
+  team_name = extract_team_name(user_query)
 
   if not is_valid_team(team_name):
     return jsonify({'error': 'Invalid team name'}), 400
 
-  latest_season = get_latest_seasion()
+  latest_season = get_latest_season()
   
   url = f"{BASE_URL}club-stats-season/{team_name}?season={latest_season}"
 
@@ -60,17 +94,17 @@ def extract_team_name(user_query):
   doc = nlp(user_query)
   for token in doc: 
     if token.text.upper() in VALID_TEAMS:
-      return token.text.upper()
+      return TEAM_NAME_MAPPING.get(token.text.upper(), token.text.upper())
   return None
 
 def is_valid_team(team_name):
   return team_name in VALID_TEAMS
 
 def get_latest_season():  
-  current_date = datetime().now
+  current_date = datetime.now()
   
-  if current_data.month < 10:
-    latest_season = current_date.year - 10
+  if current_date.month < 10:
+    latest_season = current_date.year - 1
   else:
     latest_season = current_date.year
   

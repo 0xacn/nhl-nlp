@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flsak_limiter import Limiter
 from flask_caching import Cache
 import requests
+from datetime import datetime
 
 app = Flask(__name__)
 limiter = Limiter(
@@ -23,39 +24,55 @@ VALID_TEAMS = [
     "STL", "TBL", "TOR", "VAN", "VGK", "WPG", "WSH"
 ]
 
-def extract_game_id(user_input):
-  tokens = user_input.split()
-  for token in tokens:
-    if token.isdigit() and len(token) == 10:
-      return token
-  return None
+@app.route('/team-stats', method=['POST'])
+@limiter.limit("10 per minute")
+def get_team_stats():
+  data = request.get_json()
+  user_query = dat['query']
+
+  team_name = extract_name_name(user_query)
+
+  if not is_valid_team(team_name):
+    return jsonify({'error': 'Invalid team name'}), 400
+
+  latest_season = get_latest_seasion()
+  
+  url = f"{BASE_URL}club-stats-season/{team_name}?season={latest_season}"
 
 
-def get_game_score(game_id):
-  url = f"{BASE_URL}/score/{game_id}"
+  cached_data = cache.get(url)
+  if cached_data: 
+    return jsonify(cached_data)
 
   response = requests.get(url)
-  if response.status_code == 200:
-    game_data = response.json()
-    score = game_data.get("score")
-    status = game_data.get("gameState")
-    return score, status
+  if response.status_code != 200:
+    return jsonify({'error': 'Failed to retrieve team statistics'}), 500
+  
+  team_stats = response.json()
+
+  cache.set(url, team_stats, timeout=3600)
+
+  return jsonify(team_stats)
+
+def extract_team_name(user_query):
+  doc = nlp(user_query)
+  for token in doc: 
+    if token.text.upper() in VALID_TEAMS:
+      return token.text.upper()
+  return None
+
+def is_valid_team(team_name):
+  return team_name in VALID_TEAMS
+
+def get_latest_season():  
+  current_date = datetime().now
+  
+  if current_data.month < 10:
+    latest_season = current_date.year - 10
   else:
-    return None, None
-
-@app.route("/get_score", methods=["POST"])
-def get_score():
-    user_input = request.json.get("query")
-    game_id = extract_game_id(user_input)
-
-    if game_id:
-        score, status = game_data.get(game_id), None
-        if score is None:
-            score, status = get_game_score(game_id)
-        if score:
-            return jsonify({"score": score, "status": status})
-
-    return jsonify({"error": "Unable to retrieve the score."})
+    latest_season = current_date.year
+  
+  return latest_season
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
